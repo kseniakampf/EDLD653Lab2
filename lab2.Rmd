@@ -17,6 +17,8 @@ library(tidyverse)
 library(rio)
 library(here)
 library(ggplot2)
+#install.packages("repurrrsive")
+library(repurrrsive)
 ```
 
 ### Part A Multiple Models
@@ -77,4 +79,21 @@ ggplot(benchmarks, aes(wave, math)) +
   scale_y_continuous(
     limits = c(115, 300)
   )
+```
+
+### Part B Star Wars 
+
+1. Use the `sw_films` list to identify how many characters were represented in each film.
+```{r}
+films <- map_chr(sw_films, "title")
+n_char <- map(sw_films, "characters") %>%
+	map_dbl(length) %>%
+	setNames(films)
+n_char
+```
+2. Use the `sw_species` list to (a) identify species that have known hair colors and (b) identify what those hair colors are.
+```{r}
+tibble(species = map_chr(sw_species, "name"),
+       hair = map_chr(sw_species, "hair_colors")) %>%
+	filter(hair != "none" & hair != "n/a" & hair != "unknown")
 ```
