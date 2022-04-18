@@ -19,6 +19,7 @@ library(here)
 library(ggplot2)
 #install.packages("repurrrsive")
 library(repurrrsive)
+library(httr)
 ```
 
 ### Part A Multiple Models
@@ -96,4 +97,34 @@ n_char
 tibble(species = map_chr(sw_species, "name"),
        hair = map_chr(sw_species, "hair_colors")) %>%
 	filter(hair != "none" & hair != "n/a" & hair != "unknown")
+```
+
+### Part C: Some basic API calls
+
+```{r}
+ability1 <- GET("https://pokeapi.co/api/v2/ability/1") %>%
+	content("parsed") 
+```
+
+1. Use {purrr} to write an API call to obtain data on the first five abilities (note, we're only using the first five to make the calls go fast, but the code would be essentially equivalent for any number of abilities you wanted to query). Make sure you parse the JSON data to a list.
+```{r}
+abilities <- paste0("https://pokeapi.co/api/v2/ability/", 1:5)
+pokemon_ab <- map(abilities, GET) 
+pokemon <- map(pokemon_ab, content, "parsed")
+```
+
+2. Use the parsed data to create a data frame that has the given ability, and the number of pokemon with that ability.
+```{r}
+pokemon_abilities <- tibble(ability = map_chr(pokemon, "name"),
+                            n_pokemon = map_dbl(pokemon, ~length(.x$pokemon)))
+pokemon_abilities
+```
+
+### Bonus
+Create a new data frame that lists the names of the pokemon with these specific abilities.
+```{r}
+ability <- map_chr(pokemon, "name")
+pokemon_name <- map(pokemon, ~map_chr(.x$pokemon, ~.x$pokemon$name))
+tibble(pokemon_name, ability) %>% 
+  unnest(pokemon_name)
 ```
