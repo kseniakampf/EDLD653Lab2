@@ -1,0 +1,80 @@
+---
+title: "EDLD Lab2"
+author: "Ksenia Gordeeva"
+date: "4/17/2022"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE)
+
+library(tidyverse)
+library(rio)
+library(here)
+library(ggplot2)
+```
+
+### Part A Multiple Models
+
+```{r load_data, include=FALSE}
+file <- "https://github.com/datalorax/esvis/raw/master/data/benchmarks.rda"
+load(url(file))
+head(benchmarks)
+```
+
+```{r recode}
+#Recode season to wave
+benchmarks <- benchmarks %>%
+	as_tibble() %>%
+	mutate(wave = case_when(season == "Fall" ~ 0,
+	                        season == "Winter" ~ 1,
+	                        TRUE ~ 2))
+```
+
+1. Fit a model of the form `lm(math ~ wave)` for each student.
+
+
+```{r}
+split_df <- split(benchmarks, benchmarks$sid) 
+models <- map(split_df, ~ lm(math ~ wave, data = .x))
+coefs <- map(models, coef) 
+ints <- map_dbl(coefs, 1)
+slopes <- map_dbl(coefs, 2)
+
+
+to_plot <- tibble(sid = names(split_df),
+                  slope = slopes,
+                  intercept = ints)
+```
+
+2. Reproduce the plot
+
+```{r}
+ggplot(benchmarks, aes(wave, math)) +
+  geom_abline(
+    aes(intercept = ints, 
+        slope = slopes, 
+        group = sid), 
+    size = 0.01, 
+    data = to_plot
+  ) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "magenta",
+    size = 2
+  ) +
+  scale_x_continuous(
+    limits = c(0, 2),
+    breaks = 0:2,
+    labels = c("Fall", "Winter", "Spring")
+  ) +
+  scale_y_continuous(
+    limits = c(115, 300)
+  )
+```
